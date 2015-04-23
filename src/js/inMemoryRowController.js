@@ -44,6 +44,7 @@ InMemoryRowController.prototype.createModel = function() {
                     if(config){
                         if(config.SetFilter && createdFilter.filter.model && createdFilter.filter.model.selectNothing){
                             createdFilter.filter.model.selectNothing();
+                            createdFilter.filter.model.selectedValuesMap = createdFilter.filter.model.selectedValuesMap || {};
                             config.SetFilter.forEach(createdFilter.filter.model.selectValue);
                         }
                         else if(config.TextFilter){
