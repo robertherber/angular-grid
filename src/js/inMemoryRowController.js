@@ -35,26 +35,108 @@ InMemoryRowController.prototype.createModel = function() {
             return that.rowsAfterMap[index];
         },
         importSettings: function(settings){
-            var orderByCols = that.columnModel.getAllColumns().forEach(function(c){
-                if(c && c.colDef.field === settings.orderByField){
-                   c.sort = settings.orderByDirection;
-                   c.eSortAsc.style.display = settings.orderByDirection === 'asc' ? 'inline' : 'none';
-                   c.eSortDesc.style.display = settings.orderByDirection !== 'asc' ? 'inline' : 'none';
+            if(settings.filters){
+                var cols = that.columnModel.getAllColumns();
+                for(var i = 0; i < cols.length; i++){
+                    that.filterManager.createFilter(cols[i]);
+                    var createdFilter = that.filterManager.allFilters[i];
+                    var config = settings.filters[cols[i].colDef.field];
+                    if(config){
+                        if(config.SetFilter && createdFilter.filter.model && createdFilter.filter.model.selectNothing){
+                            createdFilter.filter.model.selectNothing();
+                            config.SetFilter.forEach(createdFilter.filter.model.selectValue);
+                        }
+                        else if(config.TextFilter){
+                            createdFilter.filter.eFilterTextField.value = createdFilter.filter.filterText = config.TextFilter.filterText;
+                            createdFilter.filter.eTypeSelect.value = createdFilter.filter.filterType = config.TextFilter.filterType;
+                        }
+                        else if(config.NumberFilter){
+                            createdFilter.filter.eFilterTextField.value = createdFilter.filter.filterNumber = config.TextFilter.filterNumber;
+                            createdFilter.filter.eTypeSelect.value = createdFilter.filter.filterType = config.TextFilter.filterType;
+                        }
+                        else if(config.BidNameFilter){
+                            createdFilter.filter.$scope.numberText = config.BidNameFilter.numberText;
+                        }
+                        else if(config.DateFilter){
+                            createdFilter.filter.$scope.selectedDatePeriod = config.DateFilter;
+                        }
+                        else if(config.AcquisitionTypesFilter){
+                            createdFilter.filter.$scope.acquisitionTypes = config.AcquisitionTypesFilter;
+                        }
+                    }
                 }
-            });
-            that.doSort();
-            //that.angularGrid.refreshHeaderAndBody();
+                that.doFilter();
+            }
+
+            if(settings.orderByField){
+                var orderByCols = that.columnModel.getAllColumns().forEach(function(c){
+                    if(c && c.colDef.field === settings.orderByField){
+                       c.sort = settings.orderByDirection;
+                       c.eSortAsc.style.display = settings.orderByDirection === 'asc' ? 'inline' : 'none';
+                       c.eSortDesc.style.display = settings.orderByDirection !== 'asc' ? 'inline' : 'none';
+                    }
+                });
+                that.doSort();
+            }
+
             that.angularGrid.updateModelAndRefresh(constants.STEP_SORT);
-            //that.angularGrid.headerRenderer.refreshHeader();
-            /*that.angularGrid.headerRenderer.updateFilterIcons();*/
+            that.angularGrid.headerRenderer.updateFilterIcons();
         },
         exportSettings: function(){
             var orderByColumn = that.columnModel.getAllColumns().filter(function(c){
                 return !!c.sort;
             });
+
+            var cleanedFilters = {};
+            Object.keys(that.filterManager.allFilters).forEach(function(key){
+                var filterWrapper = that.filterManager.allFilters[key];
+                var config;
+
+                if(filterWrapper.filter.constructor.name === 'BidNameFilter'){
+                    config = {
+                        BidNameFilter : {
+                            numberText : filterWrapper.filter.$scope.numberText
+                        }
+                    };
+                }
+                else if(filterWrapper.filter.constructor.name === 'SetFilter'){
+                    config = {
+                        SetFilter : Object.keys(filterWrapper.filter.model.selectedValuesMap)
+                    };
+                }
+                else if(filterWrapper.filter.constructor.name === 'NumberFilter'){
+                    config = {
+                        NumberFilter : {
+                            filterNumber: filterWrapper.filter.filterNumber,
+                            filterType: filterWrapper.filter.filterType
+                        }
+                    }
+                }
+                else if(filterWrapper.filter.constructor.name === 'TextFilter'){
+                    config = {
+                        TextFilter : {
+                            filterText: filterWrapper.filter.filterText,
+                            filterType: filterWrapper.filter.filterType
+                        }
+                    }
+                }
+                else if(filterWrapper.filter.constructor.name === 'DateFilter'){
+                    config = {
+                        DateFilter : filterWrapper.filter.$scope.selectedDatePeriod
+                    };
+                }
+                else if(filterWrapper.filter.constructor.name === 'AcquisitionTypesFilter'){
+                    config = {
+                        AcquisitionTypesFilter : filterWrapper.filter.$scope.acquisitionTypes
+                    };
+                }
+                cleanedFilters[filterWrapper.field] = config;
+            });
+
             return {
                 orderByField: orderByColumn.length > 0 ? orderByColumn[0].colDef.field : null,
                 orderByDirection: orderByColumn.length > 0 ? orderByColumn[0].sort : null,
+                filters: cleanedFilters
             };
         },
         getVirtualRowCount: function() {

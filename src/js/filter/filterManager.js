@@ -17,6 +17,69 @@ FilterManager.prototype.setRowModel = function(rowModel) {
     this.rowModel = rowModel;
 };
 
+FilterManager.prototype.createFilter = function(colDefWrapper){
+    var filterWrapper = this.allFilters[colDefWrapper.colKey];
+    var colDef = colDefWrapper.colDef;
+
+    if (!filterWrapper) {
+        filterWrapper = {
+            colKey: colDefWrapper.colKey,
+            field: colDef.field
+        };
+        var filterChangedCallback = this.grid.onFilterChanged.bind(this.grid);
+        var filterParams = colDef.filterParams;
+        var params = {
+            colDef: colDef,
+            rowModel: this.rowModel,
+            filterChangedCallback: filterChangedCallback,
+            filterParams: filterParams,
+            scope: filterWrapper.scope
+        };
+        if (typeof colDef.filter === 'function') {
+            // if user provided a filter, just use it
+            // first up, create child scope if needed
+            if (this.gridOptionsWrapper.isAngularCompileFilters()) {
+                var scope = this.$scope.$new();
+                filterWrapper.scope = scope;
+                params.$scope = scope;
+            }
+            // now create filter
+            filterWrapper.filter = new colDef.filter(params);
+        } else if (colDef.filter === 'text') {
+            filterWrapper.filter = new StringFilter(params);
+        } else if (colDef.filter === 'number') {
+            filterWrapper.filter = new NumberFilter(params);
+        } else {
+            filterWrapper.filter = new SetFilter(params);
+        }
+        this.allFilters[colDefWrapper.colKey] = filterWrapper;
+
+        if (!filterWrapper.filter.getGui) { // because users can do custom filters, give nice error message
+            console.error('Filter is missing method getGui');
+        }
+
+        var eFilterGui = document.createElement('div');
+        eFilterGui.className = 'ag-filter';
+        var guiFromFilter = filterWrapper.filter.getGui();
+        if (utils.isNodeOrElement(guiFromFilter)) {
+            //a dom node or element was returned, so add child
+            eFilterGui.appendChild(guiFromFilter);
+        } else {
+            //otherwise assume it was html, so just insert
+            var eTextSpan = document.createElement('span');
+            eTextSpan.innerHTML = guiFromFilter;
+            eFilterGui.appendChild(eTextSpan);
+        }
+
+        if (filterWrapper.scope) {
+            filterWrapper.gui = this.$compile(eFilterGui)(filterWrapper.scope)[0];
+        } else {
+            filterWrapper.gui = eFilterGui;
+        }
+
+    }
+};
+
 // returns true if at least one filter is active
 FilterManager.prototype.isFilterPresent = function() {
     var atLeastOneActive = false;
