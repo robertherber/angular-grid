@@ -34,6 +34,29 @@ InMemoryRowController.prototype.createModel = function() {
         getVirtualRow: function(index) {
             return that.rowsAfterMap[index];
         },
+        importSettings: function(settings){
+            var orderByCols = that.columnModel.getAllColumns().forEach(function(c){
+                if(c && c.colDef.field === settings.orderByField){
+                   c.sort = settings.orderByDirection;
+                   c.eSortAsc.style.display = settings.orderByDirection === 'asc' ? 'inline' : 'none';
+                   c.eSortDesc.style.display = settings.orderByDirection !== 'asc' ? 'inline' : 'none';
+                }
+            });
+            that.doSort();
+            //that.angularGrid.refreshHeaderAndBody();
+            that.angularGrid.updateModelAndRefresh(constants.STEP_SORT);
+            //that.angularGrid.headerRenderer.refreshHeader();
+            /*that.angularGrid.headerRenderer.updateFilterIcons();*/
+        },
+        exportSettings: function(){
+            var orderByColumn = that.columnModel.getAllColumns().filter(function(c){
+                return !!c.sort;
+            });
+            return {
+                orderByField: orderByColumn.length > 0 ? orderByColumn[0].colDef.field : null,
+                orderByDirection: orderByColumn.length > 0 ? orderByColumn[0].sort : null,
+            };
+        },
         getVirtualRowCount: function() {
             if (that.rowsAfterMap) {
                 return that.rowsAfterMap.length;
