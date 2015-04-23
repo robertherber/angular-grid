@@ -62,7 +62,11 @@ InMemoryRowController.prototype.createModel = function() {
                             createdFilter.filter.$scope.selectedDatePeriod = config.DateFilter;
                         }
                         else if(config.AcquisitionTypesFilter){
-                            createdFilter.filter.$scope.acquisitionTypes = config.AcquisitionTypesFilter;
+                            createdFilter.filter.$scope.acquisitionTypes.forEach(function(acq){
+                                if(config.AcquisitionTypesFilter.indexOf(acq) > -1){
+                                    acq.selected = true;
+                                }
+                            });
                         }
                     }
                 }
@@ -93,6 +97,10 @@ InMemoryRowController.prototype.createModel = function() {
                 var filterWrapper = that.filterManager.allFilters[key];
                 var config;
 
+                if(!filterWrapper.filter.isFilterActive()){
+                    return;
+                }
+
                 if(filterWrapper.filter.constructor.name === 'BidNameFilter'){
                     config = {
                         BidNameFilter : {
@@ -111,7 +119,7 @@ InMemoryRowController.prototype.createModel = function() {
                             filterNumber: filterWrapper.filter.filterNumber,
                             filterType: filterWrapper.filter.filterType
                         }
-                    }
+                    };
                 }
                 else if(filterWrapper.filter.constructor.name === 'TextFilter'){
                     config = {
@@ -119,7 +127,7 @@ InMemoryRowController.prototype.createModel = function() {
                             filterText: filterWrapper.filter.filterText,
                             filterType: filterWrapper.filter.filterType
                         }
-                    }
+                    };
                 }
                 else if(filterWrapper.filter.constructor.name === 'DateFilter'){
                     config = {
@@ -128,7 +136,11 @@ InMemoryRowController.prototype.createModel = function() {
                 }
                 else if(filterWrapper.filter.constructor.name === 'AcquisitionTypesFilter'){
                     config = {
-                        AcquisitionTypesFilter : filterWrapper.filter.$scope.acquisitionTypes
+                        AcquisitionTypesFilter : filterWrapper.filter.$scope.acquisitionTypes.filter(function(acq){
+                          return acq.selected;
+                        }).map(function(acq){
+                            return acq.name;
+                        })
                     };
                 }
                 cleanedFilters[filterWrapper.field] = config;
