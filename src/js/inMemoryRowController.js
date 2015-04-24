@@ -64,9 +64,18 @@ InMemoryRowController.prototype.createModel = function() {
                             createdFilter.filter.$scope.selectedDatePeriod = config.DateFilter;
                         }
                         else if(config.AcquisitionTypesFilter){
-                            createdFilter.filter.$scope.acquisitionTypes.forEach(function(acq){
-                                if(config.AcquisitionTypesFilter.indexOf(acq) > -1){
-                                    acq.selected = true;
+                            var selectedFilters = config.AcquisitionTypesFilter;
+                            var unwatch = createdFilter.filter.$scope.$watch('acquisitionTypes', function(newVal){
+                                if(newVal && newVal.length > 0){
+                                    newVal.forEach(function(acq){
+                                        if(selectedFilters.indexOf(acq.name) > -1){
+                                            acq.selected = true;
+                                        }
+                                    });
+                                    unwatch();
+                                    that.doFilter();
+                                    that.angularGrid.updateModelAndRefresh(constants.STEP_FILTER);
+                                    that.angularGrid.headerRenderer.updateFilterIcons();
                                 }
                             });
                         }
@@ -86,7 +95,7 @@ InMemoryRowController.prototype.createModel = function() {
                 that.doSort();
             }
 
-            that.angularGrid.updateModelAndRefresh(constants.STEP_SORT);
+            that.angularGrid.updateModelAndRefresh(constants.STEP_EVERYTHING);
             that.angularGrid.headerRenderer.updateFilterIcons();
         },
         exportSettings: function(){
