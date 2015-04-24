@@ -45,7 +45,9 @@ InMemoryRowController.prototype.createModel = function() {
                         if(config.SetFilter && createdFilter.filter.model && createdFilter.filter.model.selectNothing){
                             createdFilter.filter.model.selectNothing();
                             createdFilter.filter.model.selectedValuesMap = createdFilter.filter.model.selectedValuesMap || {};
-                            config.SetFilter.forEach(createdFilter.filter.model.selectValue);
+                            config.SetFilter.forEach(function(v){
+                                createdFilter.filter.model.selectValue(v);
+                            });
                         }
                         else if(config.TextFilter){
                             createdFilter.filter.eFilterTextField.value = createdFilter.filter.filterText = config.TextFilter.filterText;
