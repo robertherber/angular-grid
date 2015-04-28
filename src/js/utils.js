@@ -86,8 +86,8 @@ Utils.prototype.addAsModalPopup = function(eParent, eChild) {
     eBackdrop.className = "ag-popup-backdrop";
 
     eBackdrop.onclick = function() {
-        eParent.removeChild(eChild);
-        eParent.removeChild(eBackdrop);
+        angular.element('.' + eChild.className).remove();
+        angular.element('.' + eBackdrop.className).remove();
     };
 
     eParent.appendChild(eBackdrop);
