@@ -79,6 +79,22 @@ InMemoryRowController.prototype.createModel = function() {
                                 }
                             });
                         }
+                        else if(config.MultiValueSelectFilter){
+                            var selectedFilters = config.MultiValueSelectFilter;
+                            var unwatch = createdFilter.filter.$scope.$watch('values', function(newVal){
+                                if(newVal && newVal.length > 0){
+                                    newVal.forEach(function(acq){
+                                        if(selectedFilters.indexOf(acq.name) > -1){
+                                            acq.selected = true;
+                                        }
+                                    });
+                                    unwatch();
+                                    that.doFilter();
+                                    that.angularGrid.updateModelAndRefresh(constants.STEP_FILTER);
+                                    that.angularGrid.headerRenderer.updateFilterIcons();
+                                }
+                            });
+                        }
                     }
                 }
                 that.doFilter();
@@ -148,6 +164,15 @@ InMemoryRowController.prototype.createModel = function() {
                 else if(filterWrapper.filter.constructor.name === 'AcquisitionTypesFilter'){
                     config = {
                         AcquisitionTypesFilter : filterWrapper.filter.$scope.acquisitionTypes.filter(function(acq){
+                          return acq.selected;
+                        }).map(function(acq){
+                            return acq.name;
+                        })
+                    };
+                }
+                else if(filterWrapper.filter.constructor.name === 'MultiValueSelectFilter'){
+                    config = {
+                        MultiValueSelectFilter : filterWrapper.filter.$scope.values.filter(function(acq){
                           return acq.selected;
                         }).map(function(acq){
                             return acq.name;
