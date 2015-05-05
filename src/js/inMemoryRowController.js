@@ -128,7 +128,7 @@ InMemoryRowController.prototype.createModel = function() {
                     return;
                 }
 
-                if(filterWrapper.filter.model.selectedValuesMap){
+                if(filterWrapper.filter.model && filterWrapper.filter.model.selectedValuesMap){
                     config = {
                         SetFilter : Object.keys(filterWrapper.filter.model.selectedValuesMap)
                     };
@@ -149,12 +149,12 @@ InMemoryRowController.prototype.createModel = function() {
                         }
                     };
                 }
-                else if(filterWrapper.filter.$scope.selectedDatePeriod){
+                else if(filterWrapper.filter.$scope && filterWrapper.filter.$scope.selectedDatePeriod){
                     config = {
                         DateFilter : filterWrapper.filter.$scope.selectedDatePeriod
                     };
                 }
-                else if(filterWrapper.filter.$scope.values){
+                else if(filterWrapper.filter.$scope && filterWrapper.filter.$scope.values){
                     config = {
                         MultiValueSelectFilter : filterWrapper.filter.$scope.values.filter(function(acq){
                           return acq.selected;
