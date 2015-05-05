@@ -128,19 +128,12 @@ InMemoryRowController.prototype.createModel = function() {
                     return;
                 }
 
-                if(filterWrapper.filter.constructor.name === 'BidNameFilter'){
-                    config = {
-                        BidNameFilter : {
-                            numberText : filterWrapper.filter.$scope.numberText
-                        }
-                    };
-                }
-                else if(filterWrapper.filter.constructor.name === 'SetFilter'){
+                if(filterWrapper.filter.model.selectedValuesMap){
                     config = {
                         SetFilter : Object.keys(filterWrapper.filter.model.selectedValuesMap)
                     };
                 }
-                else if(filterWrapper.filter.constructor.name === 'NumberFilter'){
+                else if(filterWrapper.filter.filterNumber){
                     config = {
                         NumberFilter : {
                             filterNumber: filterWrapper.filter.filterNumber,
@@ -148,7 +141,7 @@ InMemoryRowController.prototype.createModel = function() {
                         }
                     };
                 }
-                else if(filterWrapper.filter.constructor.name === 'TextFilter'){
+                else if(filterWrapper.filter.filterText){
                     config = {
                         TextFilter : {
                             filterText: filterWrapper.filter.filterText,
@@ -156,21 +149,12 @@ InMemoryRowController.prototype.createModel = function() {
                         }
                     };
                 }
-                else if(filterWrapper.filter.constructor.name === 'DateFilter'){
+                else if(filterWrapper.filter.$scope.selectedDatePeriod){
                     config = {
                         DateFilter : filterWrapper.filter.$scope.selectedDatePeriod
                     };
                 }
-                else if(filterWrapper.filter.constructor.name === 'AcquisitionTypesFilter'){
-                    config = {
-                        AcquisitionTypesFilter : filterWrapper.filter.$scope.acquisitionTypes.filter(function(acq){
-                          return acq.selected;
-                        }).map(function(acq){
-                            return acq.name;
-                        })
-                    };
-                }
-                else if(filterWrapper.filter.constructor.name === 'MultiValueSelectFilter'){
+                else if(filterWrapper.filter.$scope.values){
                     config = {
                         MultiValueSelectFilter : filterWrapper.filter.$scope.values.filter(function(acq){
                           return acq.selected;
