@@ -86,7 +86,7 @@ Utils.prototype.addAsModalPopup = function(eParent, eChild) {
         var targetParent = angular.element(evt.target).parents('.ag-filter');
         var parent = angular.element(eChild);
         if(targetParent[0] !== parent[0]){
-            eChild.remove();
+            parent.remove();
             document.documentElement.removeEventListener('mouseup', removePopups);
             document.documentElement.removeEventListener('keyup', onkeyup);
         }
