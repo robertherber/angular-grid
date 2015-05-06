@@ -82,19 +82,24 @@ Utils.prototype.removeAllChildren = function(node) {
 //so that when the background is clicked, the child is removed again, giving
 //a model look to popups.
 Utils.prototype.addAsModalPopup = function(eParent, eChild) {
+    var parent = angular.element(eChild);
+
+    function doRemove(){
+        parent.remove();
+        document.documentElement.removeEventListener('mouseup', removePopups);
+        document.documentElement.removeEventListener('keyup', onkeyup);
+    }
+
     var removePopups = function(evt) {
         var targetParent = angular.element(evt.target).parents('.ag-filter');
-        var parent = angular.element(eChild);
         if(targetParent[0] !== parent[0]){
-            parent.remove();
-            document.documentElement.removeEventListener('mouseup', removePopups);
-            document.documentElement.removeEventListener('keyup', onkeyup);
+            doRemove();
         }
     };
 
     var onkeyup = function(evt) {
         if(evt.keyCode === 27){
-            removePopups();
+            doRemove();
         }
     };
 
