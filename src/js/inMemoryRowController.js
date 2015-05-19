@@ -42,6 +42,7 @@ InMemoryRowController.prototype.createModel = function() {
                     var createdFilter = that.filterManager.allFilters[i];
                     var config = settings.filters[cols[i].colDef.field];
                     if(config){
+                        var newVal, selectedFilters;
                         if(config.SetFilter && createdFilter.filter.model && createdFilter.filter.model.selectNothing){
                             createdFilter.filter.model.selectNothing();
                             createdFilter.filter.model.selectedValuesMap = createdFilter.filter.model.selectedValuesMap || {};
@@ -58,42 +59,24 @@ InMemoryRowController.prototype.createModel = function() {
                             createdFilter.filter.eTypeSelect.value = createdFilter.filter.filterType = config.TextFilter.filterType;
                         }
                         else if(config.BidNameFilter){
-                            createdFilter.filter.$scope.numberText = config.BidNameFilter.numberText;
+                            createdFilter.filter.numberText = config.BidNameFilter.numberText;
                         }
                         else if(config.DateFilter){
-                            createdFilter.filter.$scope.selectedDatePeriod = config.DateFilter;
-                        }
-                        else if(config.AcquisitionTypesFilter){
-                            var selectedFilters = config.AcquisitionTypesFilter;
-                            var unwatch = createdFilter.filter.$scope.$watch('acquisitionTypes', function(newVal){
-                                if(newVal && newVal.length > 0){
-                                    newVal.forEach(function(acq){
-                                        if(selectedFilters.indexOf(acq.name) > -1){
-                                            acq.selected = true;
-                                        }
-                                    });
-                                    unwatch();
-                                    that.doFilter();
-                                    that.angularGrid.updateModelAndRefresh(constants.STEP_FILTER);
-                                    that.angularGrid.headerRenderer.updateFilterIcons();
-                                }
-                            });
+                            createdFilter.filter.selectedDatePeriod = config.DateFilter;
                         }
                         else if(config.MultiValueSelectFilter){
-                            var selectedFilters = config.MultiValueSelectFilter;
-                            var unwatch = createdFilter.filter.$scope.$watch('values', function(newVal){
-                                if(newVal && newVal.length > 0){
-                                    newVal.forEach(function(acq){
-                                        if(selectedFilters.indexOf(acq.name) > -1){
-                                            acq.selected = true;
-                                        }
-                                    });
-                                    unwatch();
-                                    that.doFilter();
-                                    that.angularGrid.updateModelAndRefresh(constants.STEP_FILTER);
-                                    that.angularGrid.headerRenderer.updateFilterIcons();
-                                }
-                            });
+                            selectedFilters = config.MultiValueSelectFilter;
+                            newVal = createdFilter.filter.values;
+                            if(newVal && newVal.length > 0){
+                                newVal.forEach(function(acq){
+                                    if(selectedFilters.indexOf(acq.name) > -1){
+                                        acq.selected = true;
+                                    }
+                                });
+                                that.doFilter();
+                                that.angularGrid.updateModelAndRefresh(constants.STEP_FILTER);
+                                that.angularGrid.headerRenderer.updateFilterIcons();
+                            }
                         }
                     }
                 }
@@ -149,14 +132,14 @@ InMemoryRowController.prototype.createModel = function() {
                         }
                     };
                 }
-                else if(filterWrapper.filter.$scope && filterWrapper.filter.$scope.selectedDatePeriod){
+                else if(filterWrapper.filter.selectedDatePeriod){
                     config = {
-                        DateFilter : filterWrapper.filter.$scope.selectedDatePeriod
+                        DateFilter : filterWrapper.filter.selectedDatePeriod
                     };
                 }
-                else if(filterWrapper.filter.$scope && filterWrapper.filter.$scope.values){
+                else if(filterWrapper.filter.values){
                     config = {
-                        MultiValueSelectFilter : filterWrapper.filter.$scope.values.filter(function(acq){
+                        MultiValueSelectFilter : filterWrapper.filter.values.filter(function(acq){
                           return acq.selected;
                         }).map(function(acq){
                             return acq.name;
