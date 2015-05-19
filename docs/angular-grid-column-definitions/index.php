@@ -73,6 +73,10 @@ include '../documentation_header.php';
             <td>Set to true if no sorting should be done for this column.</td>
         </tr>
         <tr>
+            <th>suppressSizeToFit</th>
+            <td>Set to true if you want this columns width to be fixed during 'size to fit' operation.</td>
+        </tr>
+        <tr>
             <th>group</th>
             <td>If grouping columns, the group this column belongs to.</td>
         </tr>
@@ -84,6 +88,15 @@ include '../documentation_header.php';
         <tr>
             <th>newValueHandler, cellValueChanged</th>
             <td>Callbacks for editing. See editing section for further details.</td>
+        </tr>
+        <tr>
+            <th>volatile</th>
+            <td>If true, this cell gets refreshed when api.softRefreshView() gets called.</td>
+        </tr>
+        <tr>
+            <th>cellTemplate, cellTemplateUrl</th>
+            <td>Cell template (or specify URL to load template from) to use for cell.
+                Useful for AngularJS cells.</td>
         </tr>
     </table>
 

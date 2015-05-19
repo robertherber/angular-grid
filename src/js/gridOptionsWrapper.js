@@ -14,11 +14,11 @@ GridOptionsWrapper.prototype.isRowSelectionMulti = function() { return this.grid
 GridOptionsWrapper.prototype.getContext = function() { return this.gridOptions.context; };
 GridOptionsWrapper.prototype.isVirtualPaging = function() { return isTrue(this.gridOptions.virtualPaging); };
 GridOptionsWrapper.prototype.isRowsAlreadyGrouped = function() { return isTrue(this.gridOptions.rowsAlreadyGrouped); };
-GridOptionsWrapper.prototype.isGroupCheckboxSelectionGroup = function() { return this.gridOptions.groupCheckboxSelection === 'group'; };
-GridOptionsWrapper.prototype.isGroupCheckboxSelectionChildren = function() { return this.gridOptions.groupCheckboxSelection === 'children'; };
+GridOptionsWrapper.prototype.isGroupSelectsChildren = function() { return isTrue(this.gridOptions.groupSelectsChildren); };
 GridOptionsWrapper.prototype.isGroupIncludeFooter = function() { return isTrue(this.gridOptions.groupIncludeFooter); };
 GridOptionsWrapper.prototype.isSuppressRowClickSelection = function() { return isTrue(this.gridOptions.suppressRowClickSelection); };
 GridOptionsWrapper.prototype.isGroupHeaders = function() { return isTrue(this.gridOptions.groupHeaders); };
+GridOptionsWrapper.prototype.getGroupInnerRenderer = function() { return this.gridOptions.groupInnerRenderer; };
 GridOptionsWrapper.prototype.isDontUseScrolls = function() { return isTrue(this.gridOptions.dontUseScrolls); };
 GridOptionsWrapper.prototype.getRowStyle = function() { return this.gridOptions.rowStyle; };
 GridOptionsWrapper.prototype.getRowClass = function() { return this.gridOptions.rowClass; };
@@ -28,6 +28,7 @@ GridOptionsWrapper.prototype.getApi = function() { return this.gridOptions.api; 
 GridOptionsWrapper.prototype.isEnableSorting = function() { return this.gridOptions.enableSorting; };
 GridOptionsWrapper.prototype.isEnableColResize = function() { return this.gridOptions.enableColResize; };
 GridOptionsWrapper.prototype.isEnableFilter = function() { return this.gridOptions.enableFilter; };
+GridOptionsWrapper.prototype.getColWidth = function() { return this.gridOptions.colWidth; };
 GridOptionsWrapper.prototype.getGroupDefaultExpanded = function() { return this.gridOptions.groupDefaultExpanded; };
 GridOptionsWrapper.prototype.getGroupKeys = function() { return this.gridOptions.groupKeys; };
 GridOptionsWrapper.prototype.getGroupAggFunction = function() { return this.gridOptions.groupAggFunction; };
@@ -41,11 +42,13 @@ GridOptionsWrapper.prototype.getRowHeight = function() { return this.gridOptions
 GridOptionsWrapper.prototype.getModelUpdated = function() { return this.gridOptions.modelUpdated; };
 GridOptionsWrapper.prototype.getCellClicked = function() { return this.gridOptions.cellClicked; };
 GridOptionsWrapper.prototype.getCellDoubleClicked = function() { return this.gridOptions.cellDoubleClicked; };
+GridOptionsWrapper.prototype.getCellValueChanged = function() { return this.gridOptions.cellValueChanged; };
 GridOptionsWrapper.prototype.getRowSelected = function() { return this.gridOptions.rowSelected; };
 GridOptionsWrapper.prototype.getSelectionChanged = function() { return this.gridOptions.selectionChanged; };
 GridOptionsWrapper.prototype.getVirtualRowRemoved = function() { return this.gridOptions.virtualRowRemoved; };
 GridOptionsWrapper.prototype.getDatasource = function() { return this.gridOptions.datasource; };
 GridOptionsWrapper.prototype.getReady = function() { return this.gridOptions.ready; };
+GridOptionsWrapper.prototype.getRowBuffer = function() { return this.gridOptions.rowBuffer; };
 
 GridOptionsWrapper.prototype.setSelectedRows = function(newSelectedRows) {
     return this.gridOptions.selectedRows = newSelectedRows;
@@ -60,10 +63,6 @@ GridOptionsWrapper.prototype.getIcons = function() {
 
 GridOptionsWrapper.prototype.isDoInternalGrouping = function() {
     return !this.isRowsAlreadyGrouped() && this.gridOptions.groupKeys;
-};
-
-GridOptionsWrapper.prototype.isGroupCheckboxSelection = function() {
-    return this.isGroupCheckboxSelectionChildren() || this.isGroupCheckboxSelectionGroup();
 };
 
 GridOptionsWrapper.prototype.getHeaderHeight = function() {

@@ -1,3 +1,4 @@
+var utils = require('./utils');
 var constants = require('./constants');
 var GridOptionsWrapper = require('./gridOptionsWrapper');
 var template = require('./template.js');
@@ -12,6 +13,7 @@ var InMemoryRowController = require('./inMemoryRowController');
 var VirtualPageRowController = require('./virtualPageRowController');
 var PaginationController = require('./paginationController');
 var ExpressionService = require('./expressionService');
+var TemplateService = require('./templateService');
 
 function Grid(eGridDiv, gridOptions, $scope, $compile) {
 
@@ -41,6 +43,8 @@ function Grid(eGridDiv, gridOptions, $scope, $compile) {
     this.findAllElements(eGridDiv);
     this.createAndWireBeans($scope, $compile, eGridDiv, useScrolls);
 
+    this.scrollWidth = utils.getScrollbarWidth();
+
     this.inMemoryRowController.setAllRows(this.gridOptionsWrapper.getAllRows());
 
     if (useScrolls) {
@@ -68,7 +72,7 @@ function Grid(eGridDiv, gridOptions, $scope, $compile) {
 
     // if ready function provided, use it
     if (typeof this.gridOptionsWrapper.getReady() == 'function') {
-        this.gridOptionsWrapper.getReady()();
+        this.gridOptionsWrapper.getReady()(gridOptions.api);
     }
 }
 
@@ -88,16 +92,19 @@ Grid.prototype.createAndWireBeans = function($scope, $compile, eGridDiv, useScro
     var inMemoryRowController = new InMemoryRowController();
     var virtualPageRowController = new VirtualPageRowController();
     var expressionService = new ExpressionService();
+    var templateService = new TemplateService();
 
     var columnModel = columnController.getModel();
 
     // initialise all the beans
+    templateService.init($scope);
     selectionController.init(this, this.eParentOfRows, gridOptionsWrapper, $scope, rowRenderer);
     filterManager.init(this, gridOptionsWrapper, $compile, $scope);
     selectionRendererFactory.init(this, selectionController);
     columnController.init(this, selectionRendererFactory, gridOptionsWrapper);
     rowRenderer.init(gridOptions, columnModel, gridOptionsWrapper, eGridDiv, this,
-        selectionRendererFactory, $compile, $scope, selectionController, expressionService);
+        selectionRendererFactory, $compile, $scope, selectionController, expressionService, templateService,
+        this.eParentOfRows);
     headerRenderer.init(gridOptionsWrapper, columnController, columnModel, eGridDiv, this, filterManager, $scope, $compile);
     inMemoryRowController.init(gridOptionsWrapper, columnModel, this, filterManager, $scope, expressionService);
     virtualPageRowController.init(rowRenderer);
@@ -318,11 +325,69 @@ Grid.prototype.setRows = function(rows, firstId) {
         this.gridOptions.rowData = rows;
     }
     this.inMemoryRowController.setAllRows(this.gridOptionsWrapper.getAllRows(), firstId);
-    this.selectionController.clearSelection();
+    this.selectionController.deselectAll();
     this.filterManager.onNewRowsLoaded();
     this.updateModelAndRefresh(constants.STEP_EVERYTHING);
     this.headerRenderer.updateFilterIcons();
     this.showLoadingPanel(false);
+};
+
+Grid.prototype.ensureNodeVisible = function(comparator) {
+    // look for the node index we want to display
+    var rowCount = this.rowModel.getVirtualRowCount();
+    var comparatorIsAFunction = typeof comparator === 'function';
+    var indexToSelect = -1;
+    // go through all the nodes, find the one we want to show
+    for (var i = 0; i < rowCount; i++) {
+        var node = this.rowModel.getVirtualRow(i);
+        if (comparatorIsAFunction) {
+            if (comparator(node)) {
+                indexToSelect = i;
+                break;
+            }
+        } else {
+            // check object equality against node and data
+            if (comparator === node || comparator === node.data) {
+                indexToSelect = i;
+                break;
+            }
+        }
+    }
+    if (indexToSelect >= 0) {
+        this.ensureIndexVisible(indexToSelect);
+    }
+};
+
+Grid.prototype.ensureIndexVisible = function(index) {
+    var lastRow = this.rowModel.getVirtualRowCount();
+    if (typeof index !== 'number' || index < 0 || index >= lastRow) {
+        throw 'invalid row index for ensureIndexVisible: ' + index;
+    }
+
+    var rowHeight = this.gridOptionsWrapper.getRowHeight();
+    var rowTopPixel = rowHeight * index;
+    var rowBottomPixel = rowTopPixel + rowHeight;
+
+    var viewportTopPixel = this.eBodyViewport.scrollTop;
+    var viewportHeight = this.eBodyViewport.offsetHeight;
+    var scrollShowing = this.eBodyViewport.clientWidth < this.eBodyViewport.scrollWidth;
+    if (scrollShowing) {
+        viewportHeight -= this.scrollWidth;
+    }
+    var viewportBottomPixel = viewportTopPixel + viewportHeight;
+
+    var viewportScrolledPastRow = viewportTopPixel > rowTopPixel;
+    var viewportScrolledBeforeRow = viewportBottomPixel < rowBottomPixel;
+
+    if (viewportScrolledPastRow) {
+        // if row is before, scroll up with row at top
+        this.eBodyViewport.scrollTop = rowTopPixel;
+    } else if (viewportScrolledBeforeRow) {
+        // if row is below, scroll down with row at bottom
+        var newScrollPosition = rowBottomPixel - viewportHeight;
+        this.eBodyViewport.scrollTop = newScrollPosition;
+    }
+    // otherwise, row is already in view, so do nothing
 };
 
 Grid.prototype.addApi = function() {
@@ -344,11 +409,17 @@ Grid.prototype.addApi = function() {
             that.onNewCols();
         },
         unselectAll: function() {
-            that.selectionController.clearSelection();
-            that.rowRenderer.refreshView();
+            console.error("unselectAll deprecated, call deselectAll instead");
+            this.deselectAll();
         },
         refreshView: function() {
             that.rowRenderer.refreshView();
+        },
+        softRefreshView: function() {
+            that.rowRenderer.softRefreshView();
+        },
+        refreshGroupRows: function() {
+            that.rowRenderer.refreshGroupRows();
         },
         refreshHeader: function() {
             // need to review this - the refreshHeader should also refresh all icons in the header
@@ -390,12 +461,24 @@ Grid.prototype.addApi = function() {
         deselectNode: function(node) {
             that.selectionController.deselectNode(node);
         },
+        selectAll: function() {
+            that.selectionController.selectAll();
+            that.rowRenderer.refreshView();
+        },
+        deselectAll: function() {
+            that.selectionController.deselectAll();
+            that.rowRenderer.refreshView();
+        },
         recomputeAggregates: function() {
             that.inMemoryRowController.doAggregate();
             that.rowRenderer.refreshGroupRows();
         },
         sizeColumnsToFit: function() {
             var availableWidth = that.eBody.clientWidth;
+            var scrollShowing = that.eBodyViewport.clientHeight < that.eBodyViewport.scrollHeight;
+            if (scrollShowing) {
+                availableWidth -= that.scrollWidth;
+            }
             that.columnController.sizeColumnsToFit(availableWidth);
         },
         showLoading: function(show) {
@@ -409,6 +492,12 @@ Grid.prototype.addApi = function() {
         },
         getBestCostNodeSelection: function() {
             return that.selectionController.getBestCostNodeSelection();
+        },
+        ensureIndexVisible: function(index) {
+            return that.ensureIndexVisible(index);
+        },
+        ensureNodeVisible: function(comparator) {
+            return that.ensureNodeVisible(comparator);
         }
     };
     this.gridOptions.api = api;
@@ -516,7 +605,7 @@ Grid.prototype.setPinnedColHeight = function() {
     var scrollShowing = this.eBodyViewport.clientWidth < this.eBodyViewport.scrollWidth;
     var bodyHeight = this.eBodyViewport.offsetHeight;
     if (scrollShowing) {
-        this.ePinnedColsViewport.style.height = (bodyHeight - 20) + "px";
+        this.ePinnedColsViewport.style.height = (bodyHeight - this.scrollWidth) + "px";
     } else {
         this.ePinnedColsViewport.style.height = bodyHeight + "px";
     }
@@ -554,17 +643,45 @@ Grid.prototype.setBodySize = function() {
 };
 
 Grid.prototype.addScrollListener = function() {
-    var _this = this;
+    var that = this;
+
+    var lastLeftPosition = -1;
+    var lastTopPosition = -1;
 
     this.eBodyViewport.addEventListener("scroll", function() {
-        _this.scrollHeaderAndPinned();
-        _this.rowRenderer.drawVirtualRows();
+        var newLeftPosition = that.eBodyViewport.scrollLeft;
+        var newTopPosition = that.eBodyViewport.scrollTop;
+
+        if (newLeftPosition !== lastLeftPosition) {
+            lastLeftPosition = newLeftPosition;
+            that.scrollHeader(newLeftPosition);
+        }
+
+        if (newTopPosition !== lastTopPosition) {
+            lastTopPosition = newTopPosition;
+            that.scrollPinned(newTopPosition);
+            that.rowRenderer.drawVirtualRows();
+        }
     });
+
+    this.ePinnedColsViewport.addEventListener("scroll", function() {
+        // this means the pinned panel was moved, which can only
+        // happen when the user is navigating in the pinned container
+        // as the pinned col should never scroll. so we rollback
+        // the scroll on the pinned.
+        that.ePinnedColsViewport.scrollTop = 0;
+    });
+
 };
 
-Grid.prototype.scrollHeaderAndPinned = function() {
-    this.eHeaderContainer.style.left = -this.eBodyViewport.scrollLeft + "px";
-    this.ePinnedColsContainer.style.top = -this.eBodyViewport.scrollTop + "px";
+Grid.prototype.scrollHeader = function(bodyLeftPosition) {
+    // this.eHeaderContainer.style.transform = 'translate3d(' + -bodyLeftPosition + "px,0,0)";
+    this.eHeaderContainer.style.left = -bodyLeftPosition + "px";
+};
+
+Grid.prototype.scrollPinned = function(bodyTopPosition) {
+    // this.ePinnedColsContainer.style.transform = 'translate3d(0,' + -bodyTopPosition + "px,0)";
+    this.ePinnedColsContainer.style.top = -bodyTopPosition + "px";
 };
 
 module.exports = Grid;

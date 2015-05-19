@@ -38,7 +38,7 @@ include '../documentation_header.php';
         <tr>
             <th>groupInnerCellRenderer</th>
             <td>If grouping, allows custom rendering of the group cell. Use this if you are not  happy with the default
-                presentation of the group.</td>
+                presentation of the group. This is only used when groupUseEntireRow=true.</td>
         </tr>
         <tr>
             <th>groupDefaultExpanded</th>
@@ -52,6 +52,13 @@ include '../documentation_header.php';
                 one row that's an aggregate of the passed rows. For example, if each row has a field called 'price', and
                 you want the total price, then return an object with the total price in a field 'price'. This will then
                 get rendered in the price column on in the group row.
+            </td>
+        </tr>
+        <tr>
+            <th>groupIncludeFooter</th>
+            <td>If grouping, whether to show a group footer when the group is expanded. If true, then by default, the footer
+                will container aggregate data (if any) when shown and the header will be black. When closed, the header will
+                contain the aggregate data regardless of this setting (as footer is hidden anyway).
             </td>
         </tr>
     </table>

@@ -6,38 +6,59 @@ $pageKeyboards = "AngularJS Angular Grid Documentation";
 include 'documentation_header.php';
 ?>
 
-<div style="border: 1px solid darkgrey; background-color: #eee; padding: 10px; margin: 30px 5px 5px 5px;">
-
-    <div style="font-size: 20px; font-weight: bold; text-align: center; text-decoration: underline;">
-        Value Getters, Context, Expressions and Gulp
-    </div>
+<div style="border: 1px solid darkgrey; background-color: #eee; padding: 10px; margin: 30px 5px 5px 5px;"
+     xmlns="http://www.w3.org/1999/html">
 
     <p>
-        20th April 2015
+        <b>17th May 2015</b>
     </p>
+
     <p>
-        <b>Value Getters</b> separate the 'getting' of the value from 'rendering' of the value. So you can have one
-        renderer (eg currency renderer) and then many ways to get the value (direct from attribute, or adding two
-        attributes together). See documentation section on Value Getters.
-    </p>
+        This is what I did last week:
+
+    <ul>
+
+        <li>
+            <b>Revamp of grouping</b> - I'm in the process of refactoring the cells to pave the way for keyboard
+            navigation and improved selection (both of which are work in progress). Because of this, how groups
+            are presented is now different. If using grouping, please check the documentation on how to use 'group
+            cell renderer' in your columns, to have them present the groups for selection.
+        </li>
+        <li>
+            <b>Double click to expand groups</b>, or click the icon once. This makes the groups behave in a more natural
+            way. Again this was working in preparation of cell selection and keyboard navigation.
+        </li>
+        <li>
+            <b>ensureIndexVisible</b> and <b>ensureNodeVisible</b> API functions, to scroll the grid to make rows visible.
+        </li>
+        <li>
+            <b>Multi column sort</b> (thanks Dylan Robinson). Hold down shift on the column header to add it to the sort.
+        </li>
+        <li>
+            <b>Fixed width cols</b> for 'size to fit' - add 'suppressSizeToFit' to column definition to have the column
+            width not change during the 'size to fit' operation.
+        </li>
+        <li>
+            <b>Released 1.5.0</b> - contains all the above.
+        </li>
+
+    </ul>
+
     <p>
-        <b>Context</b> allows passing client specific information into your renderers. See the documentation section
-        on Context.
+        This is what I'm doing next week:
     </p>
+
+    <ul>
+    <li>
+        I have the back broken on Cell Selection and Keyboard Navigation. I should have that finished in the next week.
+        After that the next on the list will be a) improved selection & API, b) filtering API and c) server side filtering and sorting.
+    </li>
+    </ul>
+
     <p>
-        <b>Expressions</b> allows expression to be used to calculated values and classes. See the documentation sections
-        on Cell Styling (for using Class Rules) and Value Getters (for using expressions to evaluate values).
+        I have no blockers.
     </p>
-    <p>
-        <b>Gulp</b> is now used to build the project. Thank you <b>Tanner Linsley</b> for implementing the Gulp build :)
-    </p>
-    <p>
-        <b>Note: </b> having moved to Gulp (and away from RequireJS) CSS files are no longer included in the angularGrid.js
-        file. You will need to include Angular Grid CSS files sepecifically.
-    </p>
-    <p>
-        Please tell anyone you might know who would benefit from Angular Grid.
-    </p>
+
     <a href="https://twitter.com/angularGrid" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @angularGrid</a>
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 </div>
@@ -97,7 +118,23 @@ include 'documentation_header.php';
     <hr/>
 
     <p>
-        <b>Next on my list</b> - Sleep. Take it easy. I have hardly left my laptop for two weeks!!!
+        <b>17th May</b> Revamp of Grouping, ensureIndexVisible, ensureNodeVisible, Multi Column Sort (thanks Dylan Robinson), Fixed Width Cols.
+    </p>
+
+    <hr/>
+
+    <p>
+        <b>26 April</b> - Volatile Columns, Soft Refresh, Cell Templates.
+    </p>
+
+    <hr/>
+
+    <p>
+        <b>25 April</b> - Bug fixes:
+        <a href="https://github.com/ceolter/angular-grid/issues/35">Pinned Blank Space</a>,
+        <a href="https://github.com/ceolter/angular-grid/issues/91">Group Sorting</a>,
+        <a href="https://github.com/ceolter/angular-grid/issues/90">Cell Templates</a>,
+        <a href="https://github.com/ceolter/angular-grid/issues/29">Expand / Collapse</a>
     </p>
 
     <hr/>

@@ -75,22 +75,16 @@
                     The Basics
                 </h4>
 
+                <?php if ($key == "Install") { ?>
+                    <span class="sidebarLinkSelected">Install</span>
+                <?php } else { ?>
+                    <a class="sidebarLink" href="/angular-grid-install/index.php">Install</a>
+                <?php } ?>
+
                 <?php if ($key == "Getting Started") { ?>
                     <span class="sidebarLinkSelected">Getting Started</span>
                 <?php } else { ?>
                     <a class="sidebarLink" href="/angular-grid-getting-started/index.php">Getting Started</a>
-                <?php } ?>
-
-                <?php if ($key == "Loading Rows") { ?>
-                    <span class="sidebarLinkSelected">Loading Rows</span>
-                <?php } else { ?>
-                    <a class="sidebarLink" href="/angular-grid-loading-rows/index.php">Loading Rows</a>
-                <?php } ?>
-
-                <?php if ($key == "Width & Height") { ?>
-                    <span class="sidebarLinkSelected">Width & Height</span>
-                <?php } else { ?>
-                    <a class="sidebarLink" href="/angular-grid-width-and-height/index.php">Width & Height</a>
                 <?php } ?>
 
                 <?php if ($key == "Grid Options") { ?>
@@ -158,6 +152,12 @@
                     <a class="sidebarLink" href="/angular-grid-cell-rendering/index.php">Cell Rendering</a>
                 <?php } ?>
 
+                <?php if ($key == "Cell Templates") { ?>
+                    <span class="sidebarLinkSelected">Cell Templates</span>
+                <?php } else { ?>
+                    <a class="sidebarLink" href="/angular-grid-cell-template/index.php">Cell Templates</a>
+                <?php } ?>
+
                 <?php if ($key == "Editing") { ?>
                     <span class="sidebarLinkSelected">Editing Cells</span>
                 <?php } else { ?>
@@ -168,6 +168,12 @@
                     <span class="sidebarLinkSelected">Context</span>
                 <?php } else { ?>
                     <a class="sidebarLink" href="/angular-grid-context/index.php">Context</a>
+                <?php } ?>
+
+                <?php if ($key == "Refresh") { ?>
+                    <span class="sidebarLinkSelected">Refresh</span>
+                <?php } else { ?>
+                    <a class="sidebarLink" href="/angular-grid-refresh/index.php">Refresh</a>
                 <?php } ?>
 
                 <?php if ($key == "Grouping Headers") { ?>
@@ -254,10 +260,10 @@
                     Examples
                 </h4>
 
-                <?php if ($key == "Basic Table") { ?>
-                    <span class="sidebarLinkSelected">Basic Table</span>
+                <?php if ($key == "Data Grid") { ?>
+                    <span class="sidebarLinkSelected">Data Grid</span>
                 <?php } else { ?>
-                    <a class="sidebarLink" href="/example-basic/index.php">Basic Table</a>
+                    <a class="sidebarLink" href="/example-data-grid/index.php">Data Grid</a>
                 <?php } ?>
 
                 <?php if ($key == "Styled Report") { ?>

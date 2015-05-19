@@ -95,8 +95,8 @@ include '../documentation_header.php';
         </tr>
         <tr>
             <th>groupKeys<br/> groupUseEntireRow<br/> groupInnerCellRenderer<br/>
-                groupDefaultExpanded<br/> groupAggFunction<br/> groupIconRenderer<br/>
-                groupCheckboxSelection</th>
+                groupDefaultExpanded<br/> groupAggFunction<br/>
+                groupSelectsChildren<br/> groupSuppressGroupColumn</th>
             <td>Parameters for grouping. See the section on grouping for details explanation.</td>
         </tr>
         <tr>
@@ -114,6 +114,10 @@ include '../documentation_header.php';
         <tr>
             <th>cellClicked</th>
             <td>Function callback, gets called when a cell is clicked.</td>
+        </tr>
+        <tr>
+            <th>cellDoubleClicked</th>
+            <td>Function callback, gets called when a cell is double clicked.</td>
         </tr>
         <tr>
             <th>modelUpdated</th>
@@ -134,13 +138,25 @@ include '../documentation_header.php';
             <td>Function callback, gets called when a selection is changed.</td>
         </tr>
         <tr>
+            <th>cellValueChanged</th>
+            <td>Function callback, gets called when a value has changed after editing.</td>
+        </tr>
+        <tr>
             <th>getRowClass</th>
             <td>Function callback, to allow adding a css class to a row.</td>
+        </tr>
+        <tr>
+            <th>colWidth</th>
+            <td>The default width for each col. Widths specified in column definitions get preference over this.</td>
         </tr>
         <tr>
             <th>rowsAlreadyGrouped</th>
             <td>Set to true if data provided to the grid is already in node structure (this is for passing
                 already aggregated data to the grid).</td>
+        </tr>
+        <tr>
+            <th>rowsBuffer</th>
+            <td>Defaults to 5.  Set higher to increase the number of rows that automatically load before and after the viewport.</td>
         </tr>
     </table>
 

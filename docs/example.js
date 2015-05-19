@@ -66,9 +66,9 @@ gridsModule.controller('mainController', function($scope) {
         groupHeaders: true,
         groupKeys: undefined, //set as string of keys eg ["region","country"],
 //            groupUseEntireRow: true, //one of [true, false]
-//            groupInnerCellRenderer: groupInnerCellRenderer,
 //            groupDefaultExpanded: false, //one of [true, false], or an integer if greater than 1
 //            headerHeight: 100, // set to an integer, default is 25, or 50 if grouping columns
+//        groupSuppressGroupColumn: true,
         groupIncludeFooter: false,
         pinnedColumnCount: 0, //and integer, zero or more, default is 0
         rowHeight: 25, // defaults to 25, can be any integer
@@ -76,8 +76,8 @@ gridsModule.controller('mainController', function($scope) {
         enableSorting: true, //one of [true, false]
         enableFilter: true, //one of [true, false]
         rowSelection: "multiple", // one of ['single','multiple'], leave blank for no selection
-        groupCheckboxSelection: 'children', // one of ['group','children']
-        suppressRowClickSelection: false, // if true, clicking rows doesn't select (useful for checkbox selection)
+        groupSelectsChildren: true, // one of ['group','children']
+        suppressRowClickSelection: true, // if true, clicking rows doesn't select (useful for checkbox selection)
         groupAggFunction: groupAggFunction,
         angularCompileRows: false,
         angularCompileFilters: true,
@@ -109,17 +109,32 @@ gridsModule.controller('mainController', function($scope) {
         // callback when cell double clicked
         cellDoubleClicked:  function(params) {
             console.log("Callback cellDoubleClicked: " + params.value + " - " + params.colDef.field + ' - ' + params.event);
+        },
+        ready: function(api) {
+            console.log('Callback ready: api = ' + api);
         }
     };
     $scope.angularGrid = angularGrid;
 
-    var defaultCols = [
-        {displayName: "Name", field: "name", group: 'Participant', checkboxSelection: true, width: 200, editable: editableFunc, filter: PersonFilter, headerTooltip: "The Name Column",
-            icons: {
-                sortAscending: '<i class="fa fa-sort-alpha-asc"/>',
-                sortDescending: '<i class="fa fa-sort-alpha-desc"/>'
+    var groupColumn = {
+        displayName: "Name", field: "name", group: 'Participant', width: 200, editable: editableFunc, filter: PersonFilter,
+            cellRenderer: {
+                renderer: "group",
+                checkbox: true
             }
-        },
+        };
+
+    var firstColumn = {displayName: "Name", field: "name", group: 'Participant', checkboxSelection: true, width: 200, editable: editableFunc, filter: PersonFilter,
+        icons: {
+            sortAscending: '<i class="fa fa-sort-alpha-asc"/>',
+            sortDescending: '<i class="fa fa-sort-alpha-desc"/>'
+        }
+    };
+
+    var defaultCols = [
+        //{displayName: "", valueGetter: "node.id", width: 20}, // this row is for showing node id, handy for testing
+        groupColumn,
+        firstColumn,
         {displayName: "Country", field: "country", group: 'Participant', width: 150, editable: editableFunc, cellRenderer: countryCellRenderer, filter: 'set',
             filterParams: {cellRenderer: countryCellRenderer, cellHeight: 20},
             icons: {
@@ -174,6 +189,13 @@ gridsModule.controller('mainController', function($scope) {
     createCols();
     createData();
 
+    $scope.jumpToRow = function() {
+        var index = Number($scope.jumpToRowText);
+        if (typeof index === 'number' && !isNaN(index)) {
+            angularGrid.api.ensureIndexVisible(index);
+        }
+    };
+
     $scope.onRowCountChanged = function() {
         angularGrid.api.showLoading(true);
         // put into a timeout, so browser gets a chance to update the loading panel
@@ -200,25 +222,29 @@ gridsModule.controller('mainController', function($scope) {
     $scope.onSelectionChanged = function() {
         switch ($scope.rowSelection) {
             case 'checkbox' :
-                angularGrid.columnDefs[0].checkboxSelection = true;
-                angularGrid.groupCheckboxSelection = 'children';
+                firstColumn.checkboxSelection = true;
+                groupColumn.cellRenderer.checkbox = true;
                 angularGrid.rowSelection = 'multiple';
+                angularGrid.suppressRowClickSelection = true;
                 break;
             case 'single' :
-                angularGrid.columnDefs[0].checkboxSelection = false;
-                angularGrid.groupCheckboxSelection = null;
+                firstColumn.checkboxSelection = false;
+                groupColumn.cellRenderer.checkbox = false;
                 angularGrid.rowSelection = 'single';
+                angularGrid.suppressRowClickSelection = false;
                 break;
             case 'multiple' :
-                angularGrid.columnDefs[0].checkboxSelection = false;
-                angularGrid.groupCheckboxSelection = null;
+                firstColumn.checkboxSelection = false;
+                groupColumn.cellRenderer.checkbox = false;
                 angularGrid.rowSelection = 'multiple';
+                angularGrid.suppressRowClickSelection = false;
                 break;
             default :
                 // turn selection off
-                angularGrid.columnDefs[0].checkboxSelection = false;
-                angularGrid.groupCheckboxSelection = null;
+                firstColumn.checkboxSelection = false;
+                groupColumn.cellRenderer.checkbox = false;
                 angularGrid.rowSelection = null;
+                angularGrid.suppressRowClickSelection = false;
                 break;
         }
         angularGrid.api.unselectAll();
@@ -256,6 +282,8 @@ gridsModule.controller('mainController', function($scope) {
         var useFooter = $scope.groupType==='colWithFooter' || $scope.groupType==='rowWithFooter';
         angularGrid.groupIncludeFooter = useFooter;
 
+        createCols();
+        angularGrid.api.onNewCols();
         angularGrid.api.onNewRows();
     };
 
@@ -266,8 +294,16 @@ gridsModule.controller('mainController', function($scope) {
     function createCols() {
         var colCount = parseInt($scope.colCount);
 
-        //start with a copy of the default cols
+        // start with a copy of the default cols
         var columns = defaultCols.slice(0, colCount);
+
+        // if not grouping, take out the group column
+        var groupColNeeded = $scope.groupBy!=='' && ($scope.groupType==='col' || $scope.groupType==='colWithFooter');
+        if (!groupColNeeded) {
+            columns.splice(0,1);
+        } else {
+            columns.splice(1,1);
+        }
 
         for (var col = defaultCols.length; col<colCount; col++) {
             var colName = colNames[col % colNames.length];
@@ -476,10 +512,6 @@ function headerCellRenderer_angular(params) {
         '   ng-show="showIcon">' +
         '{{colDef.displayName}}' +
         '</span>';
-}
-
-function groupInnerCellRenderer(params) {
-    return "<b>" + params.data.key + "</b>";
 }
 
 function groupAggFunction(nodes) {

@@ -1,7 +1,8 @@
 // Angular Grid
 // Written by Niall Crosby
 // www.angulargrid.com
-
+//
+// Version 1.4.1
 
 (function() {
 
@@ -31,7 +32,6 @@
     }
 
     root.angularGrid = angularGridGlobalFunction;
-
 
     function AngularDirectiveController($element, $scope, $compile) {
         var eGridDiv = $element[0];

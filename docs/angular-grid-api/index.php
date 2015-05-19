@@ -36,7 +36,11 @@ include '../documentation_header.php';
                 open, will stay.</td>
         </tr>
         <tr>
-            <th>unselectAll()</th>
+            <th>selectAll()</th>
+            <td>Select all rows (even rows that are not visible due to grouping being and their groups not expanded).</td>
+        </tr>
+        <tr>
+            <th>deselectAll()</th>
             <td>Clear all row selections.</td>
         </tr>
         <tr>
@@ -68,7 +72,17 @@ include '../documentation_header.php';
         </tr>
         <tr>
             <th>refreshView()</th>
-            <td>Redraw all visible rows. Handy has a blanked 'redraw all' if changes have been made to the row data.</td>
+            <td>Rip out and re-insert all visible rows. Handy has a blanket 'redraw all' if changes have been made to the row data.</td>
+        </tr>
+        <tr>
+            <th>softRefreshView()</th>
+            <td>Leave the rows intact. Each cell that has been market as volatile (via colDef attribute) will be redrawn. Any cells that
+                are not marked as volatile will be left alone, hence keeping any context or state that they have.</td>
+        </tr>
+        <tr>
+            <th>refreshGroupRows()</th>
+            <td>Rip out and re-insert all visible header and footer rows only. Only need to call if update the aggregate data yourself,
+            as this gets called after <i>recomputeAggregates()</i> anyway.</td>
         </tr>
         <tr>
             <th>getModel()</th>
@@ -122,6 +136,16 @@ include '../documentation_header.php';
             <th>recomputeAggregates()</th>
             <td>Recomputes the aggregates in the model and refreshes all the group rows.
             </td>
+        </tr>
+        <tr>
+            <th>ensureIndexVisible(index)</th>
+            <td>Ensures the index is visible, scrolling the table if needed.</td>
+        </tr>
+        <tr>
+            <th>ensureNodeVisible(comparator)</th>
+            <td>Ensures a node is visible, scrolling the table if needed. Provide one of a) the node
+            b) the data object c) a comparator function (that taks the node as a paramter, and returns
+            true for match, false for no match)</td>
         </tr>
     </table>
 

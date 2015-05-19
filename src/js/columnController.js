@@ -39,6 +39,26 @@ ColumnController.prototype.createModel = function() {
         // + headerRenderer -> setting pinned body width
         getColumnGroups: function() {
             return that.columnGroups;
+        },
+        // used by:
+        // + rowRenderer -> for navigation
+        getVisibleColBefore: function(col) {
+            var oldIndex = that.visibleColumns.indexOf(col);
+            if (oldIndex > 0) {
+                return that.visibleColumns[oldIndex - 1];
+            } else {
+                return null;
+            }
+        },
+        // used by:
+        // + rowRenderer -> for navigation
+        getVisibleColAfter: function(col) {
+            var oldIndex = that.visibleColumns.indexOf(col);
+            if (oldIndex < (that.visibleColumns.length - 1)) {
+                return that.visibleColumns[oldIndex + 1];
+            } else {
+                return null;
+            }
         }
     };
 };
@@ -81,27 +101,48 @@ ColumnController.prototype.updateVisibleColumns = function() {
 };
 
 // public - called from api
-ColumnController.prototype.sizeColumnsToFit = function(availableWidth) {
+ColumnController.prototype.sizeColumnsToFit = function(gridWidth) {
     // avoid divide by zero
-    if (availableWidth <= 0 || this.visibleColumns.length === 0) {
+    if (gridWidth <= 0 || this.visibleColumns.length === 0) {
         return;
     }
 
-    var currentTotalWidth = this.getTotalColWidth();
-    var scale = availableWidth / currentTotalWidth;
+    var columnStartWidth = 0; // will contain the starting total width of the cols been spread
+    var colsToSpread = []; // all visible cols, except those with avoidSizeToFit
+    var widthForSpreading = gridWidth; // grid width minus the columns we are not resizing
+
+    // get the list of cols to work with
+    for (var j = 0; j < this.visibleColumns.length ; j++) {
+        if (this.visibleColumns[j].colDef.suppressSizeToFit === true) {
+            // don't include col, and remove the width from teh available width
+            widthForSpreading -= this.visibleColumns[j].actualWidth;
+        } else {
+            // include the col
+            colsToSpread.push(this.visibleColumns[j]);
+            columnStartWidth += this.visibleColumns[j].actualWidth;
+        }
+    }
+
+    // if no width left over to spread with, do nothing
+    if (widthForSpreading <= 0) {
+        return;
+    }
+
+    var scale = widthForSpreading / columnStartWidth;
+    var pixelsForLastCol = widthForSpreading;
 
     // size all cols except the last by the scale
-    for (var i = 0; i < (this.visibleColumns.length - 1); i++) {
-        var column = this.visibleColumns[i];
+    for (var i = 0; i < (colsToSpread.length - 1); i++) {
+        var column = colsToSpread[i];
         var newWidth = parseInt(column.actualWidth * scale);
         column.actualWidth = newWidth;
+        pixelsForLastCol -= newWidth;
     }
 
     // size the last by whats remaining (this avoids rounding errors that could
     // occur with scaling everything, where it result in some pixels off)
-    var pixelsLeftForLastCol = availableWidth - this.getTotalColWidth();
-    var lastColumn = this.visibleColumns[this.visibleColumns.length - 1];
-    lastColumn.actualWidth += pixelsLeftForLastCol;
+    var lastColumn = colsToSpread[colsToSpread.length - 1];
+    lastColumn.actualWidth = pixelsForLastCol;
 
     // widths set, refresh the gui
     this.angularGrid.refreshHeaderAndBody();
@@ -181,6 +222,10 @@ ColumnController.prototype.buildColumns = function(columnDefs) {
 // private
 // set the actual widths for each col
 ColumnController.prototype.ensureEachColHasSize = function() {
+    var defaultWidth = this.gridOptionsWrapper.getColWidth();
+    if (typeof defaultWidth !== 'number' || defaultWidth < constants.MIN_COL_WIDTH) {
+        defaultWidth = 200;
+    }
     this.columns.forEach(function(colDefWrapper) {
         var colDef = colDefWrapper.colDef;
         if (colDefWrapper.actualWidth) {
@@ -188,7 +233,7 @@ ColumnController.prototype.ensureEachColHasSize = function() {
             return;
         } else if (!colDef.width) {
             // if no width defined in colDef, default to 200
-            colDefWrapper.actualWidth = 200;
+            colDefWrapper.actualWidth = defaultWidth;
         } else if (colDef.width < constants.MIN_COL_WIDTH) {
             // if width in col def to small, set to min width
             colDefWrapper.actualWidth = constants.MIN_COL_WIDTH;

@@ -259,12 +259,12 @@ InMemoryRowController.prototype.recursivelyCreateAggData = function(nodes, group
         var node = nodes[i];
         if (node.group) {
             // agg function needs to start at the bottom, so traverse first
-            this.recursivelyCreateAggData(node.children, groupAggFunction);
+            this.recursivelyCreateAggData(node.childrenAfterFilter, groupAggFunction);
             // after traversal, we can now do the agg at this level
-            var data = groupAggFunction(node.children);
+            var data = groupAggFunction(node.childrenAfterFilter);
             node.data = data;
             // if we are grouping, then it's possible there is a sibling footer
-            // to the group, so update the data here also if thers is one
+            // to the group, so update the data here also if there is one
             if (node.sibling) {
                 node.sibling.data = data;
             }
@@ -275,65 +275,82 @@ InMemoryRowController.prototype.recursivelyCreateAggData = function(nodes, group
 // private
 InMemoryRowController.prototype.doSort = function() {
     //see if there is a col we are sorting by
-    var columnForSorting = null;
-    this.columnModel.getAllColumns().forEach(function(colDefWrapper) {
-        if (colDefWrapper.sort) {
-            columnForSorting = colDefWrapper;
+    var sortingOptions = [];
+    this.columnModel.getAllColumns().forEach(function(column) {
+        if (column.sort) {
+            var ascending = column.sort === constants.ASC;
+            sortingOptions.push({
+                inverter: ascending ? 1 : -1,
+                sortedAt: column.sortedAt,
+                colDef: column.colDef
+            });
         }
+    });
+
+    // The columns are to be sorted in the order that the user selected them:
+    sortingOptions.sort(function(optionA, optionB){
+        return optionA.sortedAt - optionB.sortedAt;
     });
 
     var rowNodesBeforeSort = this.rowsAfterFilter.slice(0);
 
-    if (columnForSorting) {
-        var ascending = columnForSorting.sort === constants.ASC;
-        var inverter = ascending ? 1 : -1;
-
-        this.sortList(rowNodesBeforeSort, columnForSorting.colDef, inverter);
+    if (sortingOptions.length) {
+        this.sortList(rowNodesBeforeSort, sortingOptions);
     } else {
-        //if no sorting, set all group children after sort to the original list
-        this.resetSortInGroups(rowNodesBeforeSort);
+        // if no sorting, set all group children after sort to the original list
+        this.recursivelyResetSort(rowNodesBeforeSort);
     }
 
     this.rowsAfterSort = rowNodesBeforeSort;
 };
 
 // private
-InMemoryRowController.prototype.resetSortInGroups = function(rowNodes) {
+InMemoryRowController.prototype.recursivelyResetSort = function(rowNodes) {
     for (var i = 0, l = rowNodes.length; i < l; i++) {
         var item = rowNodes[i];
         if (item.group && item.children) {
-            item.childrenAfterSort = item.children;
-            this.resetSortInGroups(item.children);
+            item.childrenAfterSort = item.childrenAfterFilter;
+            this.recursivelyResetSort(item.children);
         }
     }
 };
 
 // private
-InMemoryRowController.prototype.sortList = function(nodes, colDef, inverter) {
+InMemoryRowController.prototype.sortList = function(nodes, sortOptions) {
 
     // sort any groups recursively
     for (var i = 0, l = nodes.length; i < l; i++) { // critical section, no functional programming
         var node = nodes[i];
         if (node.group && node.children) {
-            node.childrenAfterSort = node.children.slice(0);
-            this.sortList(node.childrenAfterSort, colDef, inverter);
+            node.childrenAfterSort = node.childrenAfterFilter.slice(0);
+            this.sortList(node.childrenAfterSort, sortOptions);
         }
     }
 
     var that = this;
-    nodes.sort(function(objA, objB) {
-
+    function compare(objA, objB, colDef){
         var valueA = that.getValue(objA.data, colDef, objA);
         var valueB = that.getValue(objB.data, colDef, objB);
-
         if (colDef.comparator) {
             //if comparator provided, use it
-            return colDef.comparator(valueA, valueB) * inverter;
+            return colDef.comparator(valueA, valueB, objA, objB);
         } else {
             //otherwise do our own comparison
-            return utils.defaultComparator(valueA, valueB) * inverter;
+            return utils.defaultComparator(valueA, valueB, objA, objB);
         }
+    }
 
+    nodes.sort(function(objA, objB) {
+        // Iterate columns, return the first that doesn't match
+        for (var i = 0, len = sortOptions.length; i < len; i++) {
+            var sortOption = sortOptions[i];
+            var compared = compare(objA, objB, sortOption.colDef);
+            if (compared !== 0) {
+                return compared * sortOption.inverter;
+            }
+        }
+        // All matched, these are identical as far as the sort is concerned:
+        return 0;
     });
 };
 
@@ -360,7 +377,9 @@ InMemoryRowController.prototype.doFilter = function() {
     if (filterPresent) {
         rowsAfterFilter = this.filterItems(this.rowsAfterGroup, quickFilterPresent, advancedFilterPresent);
     } else {
+        // do it here
         rowsAfterFilter = this.rowsAfterGroup;
+        this.recursivelyResetFilter(this.rowsAfterGroup);
     }
     this.rowsAfterFilter = rowsAfterFilter;
 };
@@ -374,12 +393,10 @@ InMemoryRowController.prototype.filterItems = function(rowNodes, quickFilterPres
 
         if (node.group) {
             // deal with group
-            var filteredChildren = this.filterItems(node.children, quickFilterPresent, advancedFilterPresent);
-            if (filteredChildren.length > 0) {
-                var allChildrenCount = this.getTotalChildCount(filteredChildren);
-                var newGroup = this.copyGroupNode(node, filteredChildren, allChildrenCount);
-
-                result.push(newGroup);
+            node.childrenAfterFilter = this.filterItems(node.children, quickFilterPresent, advancedFilterPresent);
+            if (node.childrenAfterFilter.length > 0) {
+                node.allChildrenCount = this.getTotalChildCount(node.childrenAfterFilter);
+                result.push(node);
             }
         } else {
             if (this.doesRowPassFilter(node, quickFilterPresent, advancedFilterPresent)) {
@@ -389,6 +406,18 @@ InMemoryRowController.prototype.filterItems = function(rowNodes, quickFilterPres
     }
 
     return result;
+};
+
+// private
+InMemoryRowController.prototype.recursivelyResetFilter = function(nodes) {
+    for (var i = 0, l = nodes.length; i < l; i++) {
+        var node = nodes[i];
+        if (node.group && node.children) {
+            node.childrenAfterFilter = node.children;
+            node.allChildrenCount = this.getTotalChildCount(node.childrenAfterFilter);
+            this.recursivelyResetFilter(node.children);
+        }
+    }
 };
 
 // private
