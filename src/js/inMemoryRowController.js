@@ -86,9 +86,11 @@ InMemoryRowController.prototype.createModel = function() {
             if(settings.orderByField){
                 var orderByCols = that.columnModel.getAllColumns().forEach(function(c){
                     if(c && c.colDef.field === settings.orderByField){
-                       c.sort = settings.orderByDirection;
-                       c.eSortAsc.style.display = settings.orderByDirection === 'asc' ? 'inline' : 'none';
-                       c.eSortDesc.style.display = settings.orderByDirection !== 'asc' ? 'inline' : 'none';
+                        c.sort = settings.orderByDirection;
+                        if(c.eSortAsc && c.eSortDesc){
+                            c.eSortAsc.style.display = settings.orderByDirection === 'asc' ? 'inline' : 'none';
+                            c.eSortDesc.style.display = settings.orderByDirection !== 'asc' ? 'inline' : 'none'; 
+                        }
                     }
                 });
                 that.doSort();
