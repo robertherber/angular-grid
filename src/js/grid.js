@@ -498,9 +498,148 @@ Grid.prototype.addApi = function() {
         },
         ensureNodeVisible: function(comparator) {
             return that.ensureNodeVisible(comparator);
+        },
+        exportDataAsCsv: function (params) {
+          return that.exportDataAsCsv(params);
         }
     };
     this.gridOptions.api = api;
+};
+
+Grid.prototype.exportDataAsCsv = function (params) {
+  var csvString = this.getDataAsCsv(params);
+  var fileNamePresent = params && params.fileName && params.fileName.length !== 0;
+  var fileName = fileNamePresent ? params.fileName : 'export.csv';
+  var blobObject = new Blob([csvString], {
+    type: 'text/csv;charset=utf-8;'
+  });
+  // Internet Explorer
+  if (window.navigator.msSaveOrOpenBlob) {
+    window.navigator.msSaveOrOpenBlob(blobObject, fileName);
+  } else {
+    // Chrome
+    var downloadLink = document.createElement("a");
+    downloadLink.href = (window).URL.createObjectURL(blobObject);
+    downloadLink.download = fileName;
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
+}
+Grid.prototype.getDataAsCsv = function (params) {
+
+  var LINE_SEPARATOR = '\r\n';
+
+  var result = '';
+
+  var skipGroups = params && params.skipGroups;
+  var skipHeader = params && params.skipHeader;
+  var skipFooters = params && params.skipFooters;
+  var includeCustomHeader = params && params.customHeader;
+  var includeCustomFooter = params && params.customFooter;
+
+  var columnsToExport = this.gridOptions.columnDefs;
+
+  if (!columnsToExport || columnsToExport.length === 0) {
+    return '';
+  }
+
+  if (includeCustomHeader) {
+    result += params.customHeader;
+  }
+
+  // first pass, put in the header names of the cols
+  if (!skipHeader) {
+    columnsToExport.forEach((column, index) => {
+      console.log(column);
+      var nameForCol = column.group ? column.group + ':' : '';
+      nameForCol += column.displayName;
+      if (nameForCol === null || nameForCol === undefined) {
+        nameForCol = '';
+      }
+      if (index != 0) {
+        result += ';';
+      }
+      result += '"' + this.escape(nameForCol) + '"';
+    });
+    result += LINE_SEPARATOR;
+  }
+
+  this.inMemoryRowController.rowsAfterSort.forEach((node) => {
+    if (skipGroups && node.group) { return; }
+    if (skipFooters && node.footer) { return; }
+
+
+    columnsToExport.forEach((column, index) => {
+
+      var valueForCell;
+      var data = node.data[column.field];
+      if (node.group && index === 0) {
+        valueForCell = this.createValueForGroupNode(node);
+      } else if (data) {
+        //console.log(column);
+        if (column.exportRenderer) {
+          var data = node.data[column.field];
+          if (Array.isArray(data)) {
+            console.log('is array');
+            valueForCell = column.exportRenderer(data);
+          }
+          else {
+            console.log('no array' + node.data + 'column' + column);
+            valueForCell = column.exportRenderer(data);
+          }
+          console.log('value: ' + valueForCell);
+        }
+        else {
+          valueForCell = node.data ? node.data[column.field] : null;
+        }
+      }
+      if (valueForCell === null || valueForCell === undefined) {
+        valueForCell = '';
+      }
+      if (index != 0) {
+        result += ';';
+      }
+      result += '"' + this.escape(valueForCell) + '"';
+    });
+
+    result += LINE_SEPARATOR;
+  });
+
+  if (includeCustomFooter) {
+    result += params.customFooter;
+  }
+
+  return result;
+};
+
+Grid.prototype.createValueForGroupNode = function (node) {
+  var keys = [node.key];
+  while (node.parent) {
+    node = node.parent;
+    keys.push(node.key);
+  }
+  return keys.reverse().join(' -> ');
+};
+
+// replace each " with "" (ie two sets of double quotes is how to do double quotes in csv)
+Grid.prototype.escape = function (value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  var stringValue;
+  if (typeof value === 'string') {
+    stringValue = value;
+  } else if (typeof value.toString === 'function') {
+    stringValue = value.toString();
+  } else {
+    console.warn('known value type during csv conversion');
+    stringValue = '';
+  }
+
+  return stringValue.replace(/"/g, "\"\"");
 };
 
 Grid.prototype.addVirtualRowListener = function(rowIndex, callback) {
