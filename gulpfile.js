@@ -9,7 +9,7 @@ var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var streamify = require("streamify");
 var nib = require('nib');
-
+var gutil = require('gulp-util');
 
 gulp.task('default', ['build', 'watch']);
 
@@ -30,7 +30,7 @@ function jsTask() {
         .pipe(gulp.dest('./dist'))
         .pipe(gulp.dest('./docs/dist'))
         .pipe(buffer())
-        .pipe(uglify())
+        .pipe(uglify().on('error', gutil.log))
         .pipe(rename('angularGrid.min.js'))
         .pipe(gulp.dest('./dist'))
         .pipe(gulp.dest('./docs/dist'));

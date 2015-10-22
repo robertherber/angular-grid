@@ -551,7 +551,7 @@ Grid.prototype.getDataAsCsv = function (params) {
 
   // first pass, put in the header names of the cols
   if (!skipHeader) {
-    columnsToExport.forEach((column, index) => {
+    columnsToExport.forEach(function(column, index) {
       console.log(column);
       var nameForCol = column.group ? column.group + ':' : '';
       nameForCol += column.displayName;
@@ -566,12 +566,11 @@ Grid.prototype.getDataAsCsv = function (params) {
     result += LINE_SEPARATOR;
   }
 
-  this.inMemoryRowController.rowsAfterSort.forEach((node) => {
+  this.inMemoryRowController.rowsAfterSort.forEach(function(node) {
     if (skipGroups && node.group) { return; }
     if (skipFooters && node.footer) { return; }
 
-
-    columnsToExport.forEach((column, index) => {
+    columnsToExport.forEach(function(column, index)  {
 
       var valueForCell;
       var data = node.data[column.field];
