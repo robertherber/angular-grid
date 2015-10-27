@@ -567,7 +567,6 @@ Grid.prototype.getDataAsCsv = function (params) {
   // first pass, put in the header names of the cols
   if (!skipHeader) {
     columnsToExport.forEach(function(column, index) {
-      console.log(column);
       var nameForCol = column.group ? column.group + ':' : '';
       nameForCol += column.displayName;
       if (nameForCol === null || nameForCol === undefined) {
@@ -592,7 +591,6 @@ Grid.prototype.getDataAsCsv = function (params) {
       if (node.group && index === 0) {
         valueForCell = this.createValueForGroupNode(node);
       } else if (data) {
-        //console.log(column);
         if (column.exportRenderer) {
           var data = node.data[column.field];
           if (Array.isArray(data)) {
@@ -632,25 +630,6 @@ Grid.prototype.createValueForGroupNode = function (node) {
     keys.push(node.key);
   }
   return keys.reverse().join(' -> ');
-};
-
-// replace each " with "" (ie two sets of double quotes is how to do double quotes in csv)
-Grid.prototype.escape = function (value) {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  var stringValue;
-  if (typeof value === 'string') {
-    stringValue = value;
-  } else if (typeof value.toString === 'function') {
-    stringValue = value.toString();
-  } else {
-    console.warn('known value type during csv conversion');
-    stringValue = '';
-  }
-
-  return stringValue.replace(/"/g, "\"\"");
 };
 
 Grid.prototype.addVirtualRowListener = function(rowIndex, callback) {
