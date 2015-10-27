@@ -529,6 +529,21 @@ Grid.prototype.exportDataAsCsv = function (params) {
 }
 Grid.prototype.getDataAsCsv = function (params) {
 
+  var escapeCell = function (strKey) {
+    if (strKey == null) { // we want to catch anything null-ish, hence just == not ===
+      return '';
+    }
+    if (typeof (strKey) === 'number') {
+      return '' + strKey;
+    }
+    if (typeof (strKey) === 'boolean') {
+      return (strKey ? 'TRUE' : 'FALSE');
+    }
+    if (typeof (strKey) === 'string') {
+      return strKey.replace(/"/g, '""');
+    }
+    return JSON.stringify(strKey).replace(/"/g, '""');
+  };
   var LINE_SEPARATOR = '\r\n';
 
   var result = '';
@@ -561,7 +576,7 @@ Grid.prototype.getDataAsCsv = function (params) {
       if (index != 0) {
         result += ';';
       }
-      result += '"' + this.escape(nameForCol) + '"';
+      result += '"' + escapeCell(nameForCol) + '"';
     });
     result += LINE_SEPARATOR;
   }
@@ -581,14 +596,11 @@ Grid.prototype.getDataAsCsv = function (params) {
         if (column.exportRenderer) {
           var data = node.data[column.field];
           if (Array.isArray(data)) {
-            console.log('is array');
             valueForCell = column.exportRenderer(data);
           }
           else {
-            console.log('no array' + node.data + 'column' + column);
             valueForCell = column.exportRenderer(data);
           }
-          console.log('value: ' + valueForCell);
         }
         else {
           valueForCell = node.data ? node.data[column.field] : null;
@@ -600,7 +612,7 @@ Grid.prototype.getDataAsCsv = function (params) {
       if (index != 0) {
         result += ';';
       }
-      result += '"' + this.escape(valueForCell) + '"';
+      result += '"' + escapeCell(valueForCell) + '"';
     });
 
     result += LINE_SEPARATOR;
