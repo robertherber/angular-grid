@@ -55,8 +55,8 @@ InMemoryRowController.prototype.createModel = function() {
                             createdFilter.filter.eTypeSelect.value = createdFilter.filter.filterType = config.TextFilter.filterType;
                         }
                         else if(config.NumberFilter){
-                            createdFilter.filter.eFilterTextField.value = createdFilter.filter.filterNumber = config.TextFilter.filterNumber;
-                            createdFilter.filter.eTypeSelect.value = createdFilter.filter.filterType = config.TextFilter.filterType;
+                            createdFilter.filter.eFilterTextField.value = createdFilter.filter.filterNumber = config.NumberFilter.filterNumber;
+                            createdFilter.filter.eTypeSelect.value = createdFilter.filter.filterType = config.NumberFilter.filterType;
                         }
                         else if(config.BidNameFilter){
                             createdFilter.filter.numberText = config.BidNameFilter.numberText;
