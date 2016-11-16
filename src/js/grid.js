@@ -553,7 +553,7 @@ Grid.prototype.getDataAsCsv = function (params) {
   var skipFooters = params && params.skipFooters;
   var includeCustomHeader = params && params.customHeader;
   var includeCustomFooter = params && params.customFooter;
-
+  var delimiter = params && params.delimiter ? params.delimiter : ';';
   var columnsToExport = this.gridOptions.columnDefs;
 
   if (!columnsToExport || columnsToExport.length === 0) {
@@ -573,7 +573,7 @@ Grid.prototype.getDataAsCsv = function (params) {
         nameForCol = '';
       }
       if (index != 0) {
-        result += ';';
+        result += delimiter;
       }
       result += '"' + escapeCell(nameForCol) + '"';
     });
@@ -608,7 +608,7 @@ Grid.prototype.getDataAsCsv = function (params) {
         valueForCell = '';
       }
       if (index != 0) {
-        result += ';';
+        result += delimiter;
       }
       result += '"' + escapeCell(valueForCell) + '"';
     });
