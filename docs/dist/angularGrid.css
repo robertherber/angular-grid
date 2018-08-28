@@ -115,9 +115,9 @@
   float: right;
 }
 .ag-loading-panel {
-  z-index: 1 /* make the loading panel appear one above the grid*/;
+  z-index: 1;
   position: absolute;
-  display: table /* this is also set in js, set to 'none' when we hide the loading panel */;
+  display: table;
   width: 100%;
 /* Height is set by javascript, to cover the table */
 }
